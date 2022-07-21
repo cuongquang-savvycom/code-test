@@ -1,0 +1,49 @@
+version: "3.3"
+
+services:
+  codetest-postgres:
+    image: postgres:14-alpine
+    container_name: ${POSTGRES_NAME}
+    hostname: ${POSTGRES_NAME}
+    ports:
+      - '${POSTGRES_EXPOSE_PORT}:5432'
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+    volumes:
+      - '${POSTGRES_DATA_DIR}:/var/lib/postgresql/data'
+
+  codetest-app:
+    build:
+      context: ${APP_DIR}
+      dockerfile: Dockerfile.local
+    container_name: ${APP_NAME}
+    volumes:
+      - ${APP_DIR}/:/usr/src/app
+      - /usr/src/app/node_modules
+      - /usr/src/app/dist
+    restart: always
+    environment:
+      - NODE_ENV=${APP_ENV}
+    ports:
+      - '${APP_EXPOSE_PORT}:3000'
+    depends_on:
+      - 'codetest-postgres'
+    links:
+      - 'codetest-postgres'
+
+  codetest-web:
+    build:
+      context: ${WEB_DIR}
+      dockerfile: Dockerfile.local
+    container_name: ${WEB_NAME}
+    volumes:
+      - ${WEB_DIR}/:/usr/src/app
+      - /usr/src/app/node_modules
+      - /usr/src/app/build
+    restart: always
+    environment:
+      - NODE_ENV=${WEB_ENV}
+    ports:
+      - '${WEB_EXPOSE_PORT}:3000'
